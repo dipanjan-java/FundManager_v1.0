@@ -1,0 +1,9 @@
+
+
+02/12/13 04:14:25 PM     User : System     Clearing Fund(s) for the following user(s)
+
+02/12/13 04:16:40 PM     User : System     Clearing Fund(s) for the following user(s)
+02/12/13 04:16:40 PM     User : System     Description : Clearing Failed! Selected user(s) has zero balance 
+
+02/12/13 04:17:01 PM     User : System     Clearing Fund(s) for the following user(s)
+02/12/13 04:17:01 PM     User : System     Description : Clearing Failed! Selected user(s) has zero balance 

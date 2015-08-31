@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:WindowedApplication 
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:mate="http://mate.asfusion.com/"  
+	xmlns:maps="map.*"
+	layout="absolute" 
+	creationComplete="oninitialise()" width="496" height="404"
+	closing= "onClose();" 
+	verticalScrollPolicy="off" 
+	horizontalScrollPolicy="off"
+	title="Fund Manager v2.0" status="Developed by Dipanjan Mukherjee   @ 2013.		 All Rights Reserved." >
+	<mx:Style source="/style/shadow.css/"/>
+	<mx:Script>
+		<![CDATA[
+			import event.MyEvents;
+			import mx.collections.ArrayCollection;
+			import flash.events.KeyboardEvent;
+			import mx.managers.PopUpManager;
+			import event.MyEventDispatcher;
+			import mx.events.*;
+			import mx.controls.Alert;
+			
+			
+			
+			[Bindable]
+			private var userdata:XML;
+			[Bindable]
+			private var sysuserdata:XML;
+			
+			public function oninitialise():void{
+				this.addEventListener(KeyboardEvent.KEY_DOWN, checkKeyHandler);
+				this.addEventListener(KeyboardEvent.KEY_UP, unCheckKeyHandler);
+				var event:MyEvents = new MyEvents(MyEvents.OPENFILE);
+		        dispatcher.dispatchEvent(event); 
+				buttonbar1.setStyle("buttonWidth", (this.width)/4);
+				buttonbar1.setStyle("buttonHeight", (this.height)*8/100);
+				this.addEventListener(Event.RESIZE, onResize);
+			}
+			private function onResize(e:Event):void{
+				buttonbar1.setStyle("buttonWidth", (this.width)/4);
+				buttonbar1.setStyle("buttonHeight", (this.height)*8/100);
+			}
+			
+			private function onClose():void{
+				this.removeEventListener(Event.RESIZE, onResize);
+				var event:MyEvents = new MyEvents(MyEvents.CLOSEFILE);
+		        dispatcher.dispatchEvent(event); 
+			}
+			
+			public function refreshUsers(event:Event):void{
+				userdata= MyEventDispatcher.userdata;
+				sysuserdata= MyEventDispatcher.sysuserdata;
+			}
+			
+			private function checkKeyHandler(e:KeyboardEvent):void{
+				if(e.ctrlKey){
+					MyEventDispatcher.ctrlpressed= true;
+				}
+				if(e.shiftKey){
+					MyEventDispatcher.shiftpressed= true;
+				}
+			}
+			private function unCheckKeyHandler(e:KeyboardEvent):void{
+				if(MyEventDispatcher.ctrlpressed)
+					MyEventDispatcher.ctrlpressed= false;
+				if(MyEventDispatcher.shiftpressed)
+					MyEventDispatcher.shiftpressed = false;
+				if(e.ctrlKey){
+					MyEventDispatcher.ctrlpressed= true;
+				}
+				if(e.shiftKey){
+					MyEventDispatcher.shiftpressed= true;
+				}
+			}
+	  		public function addtolist(e:ListEvent) :void{
+	  			var row:int =  e.rowIndex;
+	  			MyEventDispatcher.newIndex= row;
+	  			MyEventDispatcher.user= userdata.user[row].name;
+	  			
+	  			var event:MyEvents = new MyEvents(MyEvents.ADDTOLIST);
+	  			dispatcher.dispatchEvent(event);
+	  		}
+	  			  		
+	  		public function sysstatementEvent(e:Event) :void{
+	  			MyEventDispatcher.sysuserflag=true;
+	  			var newPopup:statement = statement(
+	  					PopUpManager.createPopUp(this, statement, true));
+	  				PopUpManager.centerPopUp(newPopup);
+	  		}
+	  	/*	public function clearFundEvent(e:Event):void{
+	  			MyEventDispatcher.selecteduserlist.sort(Array.CASEINSENSITIVE);
+	  			if(MyEventDispatcher.selecteduserlist.toString() == ""){
+	  				Alert.show("Please select atleast One User","No User Selected", Alert.OK);
+	  				return;
+	  			}
+	  			var selectedusers:String = "Are you sure to Clear Fund for : " + MyEventDispatcher.selecteduserlist.toString() + " ?";
+	  			Alert.show(selectedusers,"Clear Fund", Alert.YES | Alert.NO ,this, dispatchClearFund, null, Alert.NO );
+			}
+			public function dispatchClearFund(e:CloseEvent):void{
+				if(e.detail == Alert.YES){
+					MyEventDispatcher.clearflag=true;
+					var myevent:MyEvents = new MyEvents(MyEvents.ADDCREDIT);
+	  				dispatcher.dispatchEvent(myevent);
+	  			}
+			}
+			*/
+	  		
+	  		private function onButtonBarItemClick(e:ItemClickEvent):void{
+	  			switch(e.index){
+	  				case 0:	var transactionPopup:CreditPopup = CreditPopup(
+	  						PopUpManager.createPopUp(this, CreditPopup, true));
+	  						PopUpManager.centerPopUp(transactionPopup);
+	  						break;
+	  				case 1: if(MyEventDispatcher.selecteduserlist.length > 1){
+	  							Alert.show("Please Select single User","Only one User allowed", mx.controls.Alert.OK);
+	  							return;
+	  						}
+	  						else if (MyEventDispatcher.selecteduserlist.length <= 0){
+	  							Alert.show("Please Select User","Please Select a User", mx.controls.Alert.OK);
+		  						return;
+		  					}
+	  						var statementPopup:statement = statement(
+	  								PopUpManager.createPopUp(this, statement, true));
+	  						PopUpManager.centerPopUp(statementPopup);
+	  						break;
+	  				case 2: var transferPopup:Transfer = Transfer(
+	  							PopUpManager.createPopUp(this, Transfer, true));
+	  						PopUpManager.centerPopUp(transferPopup);
+	  			}
+	  		}
+	  		
+		]]>
+</mx:Script>
+	<maps:ApplicationEventMap />
+	<mate:Dispatcher id="dispatcher"/> 
+	<mate:Listener type="{MyEvents.OPENFILE}" receive="refreshUsers(event);"/>
+	<mate:Listener type="{MyEvents.ADDCREDIT}" receive="refreshUsers(event);"/>
+	<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" 
+  		width="100%" height="100%" horizontalCenter="0" top="-1" >
+  			<mx:VBox width="100%" height="100%" minHeight="250" minWidth="50" horizontalAlign="center" 
+  				horizontalScrollPolicy="off" verticalScrollPolicy="off">
+  				<mx:DataGrid id="sysusers" visible="true" dataProvider="{sysuserdata}" styleName="DataGrid"
+  					editable="false" sortableColumns="false" width="100%" height="10%" verticalCenter="0" resizableColumns="true"  selectable="false">
+					<mx:columns>
+						<mx:DataGridColumn id="sysusername" headerText="User Name" dataField="name"/>
+						<mx:DataGridColumn headerText="Balance" dataField="bal"/>
+					</mx:columns>
+				</mx:DataGrid>
+				<mx:HBox width="40%" height="7%">
+  					<mx:Button label="System Statement"  click="sysstatementEvent(event);"  
+  						useHandCursor="true" verticalCenter="0" height="100%" width="100%"/>
+  				</mx:HBox>  			
+   		
+  				<mx:DataGrid id="users" visible="true" dataProvider="{userdata.user}"  styleName="DataGrid"
+				  allowMultipleSelection="true" editable="false" itemClick="addtolist(event);" 
+				  sortableColumns="false" width="100%" height="70%" resizableColumns="true"  showHeaders="false">
+					<mx:columns>
+						<mx:DataGridColumn id="username" headerText="User Name" dataField="name"/>
+						<mx:DataGridColumn headerText="Balance" dataField="bal"/>
+					</mx:columns>
+				</mx:DataGrid>
+  			
+  			<mx:ButtonBar id="buttonbar1" width="75%" buttonHeight="15" buttonWidth="70"
+  				itemClick="onButtonBarItemClick(event)">
+  				<mx:String>Transact</mx:String>
+  				<mx:String>Statement</mx:String>
+  				<mx:String>Transfer Fund</mx:String>
+  			</mx:ButtonBar>
+  			
+  		<!--	<mx:HBox width="75%" height="8%"  bottom="3">
+  				<mx:Button label="Transact"  click="transactionEvent(event);" width="33%" height="100%" useHandCursor="true"/>
+  				<mx:Button label="Statement"  click="statementEvent(event);" width="33%" height="100%" useHandCursor="true"/>
+  				<mx:Button label="Clear Fund"  click="clearFundEvent(event);" width="25%" height="100%" useHandCursor="true"/> 
+  				<mx:Button label="Transfer Fund"  click="transferEvent(event);" width="34%" height="100%" useHandCursor="true"/>	
+  			</mx:HBox>
+  		-->
+		</mx:VBox>
+	</mx:Canvas>
+  	
+</mx:WindowedApplication>

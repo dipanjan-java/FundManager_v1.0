@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow 
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:mate="http://mate.asfusion.com/"
+	xmlns:myform="event.*"
+	creationComplete="onInitialise()"
+	dropShadowEnabled="true"  
+	verticalAlign="middle"  
+	showCloseButton="true" close="onClose()" 
+	title="Select a Transaction Type"
+	width="100%" height="100%" minHeight="300" minWidth="300">
+	
+	<mate:Dispatcher id="dispatcher"/> 
+	<mx:Script>
+		<![CDATA[
+			import mx.events.ItemClickEvent;
+			import event.*;
+			import mx.managers.PopUpManager;
+			import mx.controls.Alert;
+		[Bindable]
+		public var selectedusers:String = "";
+		[Bindable]
+		private var users:XML = null;
+		
+		private var selectingUsers:Boolean = false;
+		private var newPopup:SelectUsers;
+		
+		private function onInitialise():void{
+			MyEventDispatcher.transSelectedUserList = MyEventDispatcher.selecteduserlist;
+			MyEventDispatcher.transSelectedUserList.sort(Array.CASEINSENSITIVE);
+			selectedusers=MyEventDispatcher.transSelectedUserList.toString();
+			selectedusers = selectedusers.replace(/,/g,"\n");
+			users = MyEventDispatcher.userdata.copy();
+			users.prependChild(MyEventDispatcher.sysuserdata.copy());
+			users.prependChild(<user><name>Select a user</name><bal/></user>);
+			this.parent.addEventListener(Event.RESIZE, onResize);
+			buttonbar1.setStyle("buttonWidth", (this.width)/3);
+		}
+		
+		private function onResize(e:Event):void{
+			PopUpManager.centerPopUp(this);
+		}
+		
+		private function onClose():void{
+			MyEventDispatcher.creditflag=false;
+			MyEventDispatcher.debitflag=false;
+			this.parent.removeEventListener(Event.RESIZE, onResize);
+			PopUpManager.removePopUp(this);
+		}
+		
+		private function onButtonItemClick(e:ItemClickEvent):void{
+			if(e.index == 0){
+				var alertMessage:String = "Please select atleast one User to transact to";
+				if(Ttype.selectedItem.label == "Debit"){
+					alertMessage = "Please select atleast one User to transact from";
+					if(paidByUser.selectedIndex <1){
+						Alert.show("Please select User, who paid for the expence", "Paid by User not selected",mx.controls.Alert.OK);
+						focusManager.setFocus(paidByUser);
+						return;
+					}
+					MyEventDispatcher.userFrom = paidByUser.selectedItem.name;
+				}
+				if(MyEventDispatcher.transSelectedUserList.length <= 0){
+					Alert.show(alertMessage, "No User selected to deduct from",mx.controls.Alert.OK);
+					focusManager.setFocus(usersname);
+					return;
+				}
+				if(this.amount.value<=0  ){
+					Alert.show("Please enter a positive value for Amount", "Amount is not valid",mx.controls.Alert.OK);
+					focusManager.setFocus(amount);
+					return;
+				}
+				if(this.desc.text==null || this.desc.text == ""){
+					Alert.show("Please provide a description","No Description provided", mx.controls.Alert.OK);
+					focusManager.setFocus(desc);
+					return;
+				}
+				MyEventDispatcher.amount= this.amount.value;
+				MyEventDispatcher.desc= this.desc.text;
+				var myEvent:MyEvents = new MyEvents(MyEvents.ADDCREDIT);
+				dispatcher.dispatchEvent(myEvent);
+			}
+			else if(e.index == 1){
+				MyEventDispatcher.creditflag=false;
+				MyEventDispatcher.debitflag=false;
+			}
+			this.parent.removeEventListener(Event.RESIZE, onResize);
+			PopUpManager.removePopUp(this);
+		}
+		private function onTtypeChange(e:Event):void{
+			//viewStack1.visible = true;
+			if(e.currentTarget.selectedItem.label == "Credit"){
+				this.title = "Raise Fund";
+				selectUserFormItem.label = "Select User(s) to credit to :";
+				MyEventDispatcher.creditflag = true;
+				MyEventDispatcher.debitflag = false;
+				//viewStack1.selectedIndex = 1;
+				debitFormItem.visible = false;
+			}
+			else if(e.currentTarget.selectedItem.label == "Debit"){
+				this.title = " Add Expences";
+				selectUserFormItem.label = "Select User(s) to deduct from :";
+				MyEventDispatcher.creditflag = false;
+				MyEventDispatcher.debitflag = true;
+				//viewStack1.selectedIndex = 0;
+				debitFormItem.visible = true;
+			}
+			commonForm.visible = true;
+			buttonbar1.visible = true;
+		}
+		
+		private function onSelectUserClick(e:Event):void{
+			newPopup = SelectUsers(
+	  					PopUpManager.createPopUp(this, SelectUsers, true));
+	  		PopUpManager.centerPopUp(newPopup);
+	  		newPopup.addEventListener(MyEvents.POPUPCLOSE, onPopupClose);
+		}
+		private function onPopupClose(e:Event):void{
+			MyEventDispatcher.transSelectedUserList.sort(Array.CASEINSENSITIVE);
+			selectedusers=MyEventDispatcher.transSelectedUserList.toString();
+			selectedusers = selectedusers.replace(/,/g,"\n");
+			newPopup.removeEventListener(MyEvents.POPUPCLOSE, onPopupClose);
+		}
+		
+		]]>
+	</mx:Script>
+		<mx:VBox width="100%" height="100%" 
+			minHeight="300" minWidth="300" 
+			horizontalAlign="center" verticalGap="0">
+			
+			<mx:Form id="form1" labelWidth="150" indicatorGap="10" minWidth="300">
+				<myform:MyFormItem label="Transaction Type :">
+					<mx:ComboBox id="Ttype" prompt="Select Trans Type" selectedIndex="-1" change="onTtypeChange(event)">
+						<mx:Object label="Credit" toolTip="to increase the fund"/>
+						<mx:Object label="Debit" toolTip="for expences"/> 
+					</mx:ComboBox>
+				</myform:MyFormItem>
+			</mx:Form>
+	<!--		<mx:ViewStack id="viewStack1" visible="false">
+				<mx:Form id="debitForm" labelWidth="150" indicatorGap="10" minWidth="300" visible="false">
+					
+				</mx:Form>
+				
+				<mx:Form id="creditForm" verticalGap="10" labelWidth="120" indicatorGap="10" minHeight="200" visible="false">
+					<myform:MyFormItem label="Selected Users :">
+						<mx:TextArea id="usersname1" text="{selectedusers}"/>
+					</myform:MyFormItem>
+				</mx:Form>
+				
+			</mx:ViewStack>
+-->			
+				<mx:Form id="commonForm" labelWidth="150" indicatorGap="10" minWidth="300" minHeight="200" visible="false">
+					<myform:MyFormItem id="debitFormItem" label="Paid By :" visible="false">
+						<mx:ComboBox id="paidByUser" rowCount="10" 
+							dataProvider="{users.user}" labelField="name"
+							selectedIndex="-1" prompt="Select a user"/>
+					</myform:MyFormItem>
+					<myform:MyFormItem id="selectUserFormItem" multiline="true" label="Select User(s) :">
+						<mx:TextArea id="usersname" text="{selectedusers}" editable="false" minHeight="100"/>
+						<mx:Button label="Select User(s)" click="onSelectUserClick(event)" toolTip="Select Users to deduct from"/>
+					</myform:MyFormItem>
+					<myform:MyFormItem label="Amount :">
+						<mx:NumericStepper id="amount" maxChars="7" stepSize="0.5" maximum="5000" minimum="0" minWidth="100"/>
+					</myform:MyFormItem>
+					<myform:MyFormItem label="Description :">
+						<mx:TextInput id="desc" width="80%"/>
+					</myform:MyFormItem>
+				</mx:Form>
+			<mx:ButtonBar id="buttonbar1" itemClick="onButtonItemClick(event)" selectedIndex="-1" visible="false">
+				<mx:Object label="OK" toolTip= "Click to Transact"/>
+				<mx:Object label="Cancel" toolTip= "Click to Cancel"/>
+			</mx:ButtonBar>
+		</mx:VBox>
+</mx:TitleWindow>

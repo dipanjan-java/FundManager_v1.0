@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow 
+	xmlns:mx="http://www.adobe.com/2006/mxml" 
+	xmlns:mate="http://mate.asfusion.com/"
+	creationComplete="onCreationComplete()" showCloseButton="true" close="onClose()"
+	title="Transfer Funds" 
+	layout="absolute" 
+	width="80%" height="80%" minHeight="220" minWidth="220">
+	<mate:Dispatcher id="dispatcher"/> 
+	<mx:Script>
+		<![CDATA[
+			import mx.events.ResizeEvent;
+			import mx.events.ItemClickEvent;
+			import event.*;
+			import mx.controls.Alert;
+			import mx.managers.PopUpManager;
+			
+			[Bindable]
+			private var users:XML = null;
+			
+			private function onCreationComplete():void{
+				var nullUser:XML = 
+							<user>
+								<name>Select a user</name>
+								<bal></bal>
+							</user>;
+				users = MyEventDispatcher.userdata.copy();
+				users.prependChild(nullUser);
+				this.parent.addEventListener(ResizeEvent.RESIZE, onResize);			
+				buttonbar1.setStyle("buttonWidth", (this.width)/3);	
+			}
+			
+			public function onResize(e:Event):void{
+				PopUpManager.centerPopUp(this);
+			}
+			
+			private function onClose():void{
+				this.parent.removeEventListener(ResizeEvent.RESIZE, onResize);
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function onButtonItemClick(e:ItemClickEvent):void{
+				if(e.index == 0){
+					if(transferFrom.selectedIndex <= 0){
+						Alert.show("Please choose a user to transfer from","No User selected to transfer from", mx.controls.Alert.OK);
+						focusManager.setFocus(transferFrom);
+						return;
+					}
+					if(transferTo.selectedIndex <= 0){
+						Alert.show("Please choose a user to transfer to","No User selected to transfer to", mx.controls.Alert.OK);
+						focusManager.setFocus(transferTo);
+						return;
+					}
+					if(transferTo.selectedIndex == transferFrom.selectedIndex){
+						Alert.show("Please choose a different user to transact to" ,"Cannot transfer to the same user", mx.controls.Alert.OK);
+						focusManager.setFocus(transferTo);
+						return;
+					}
+					if(amount.value <= 0){
+						Alert.show("Please select a valid amount","Validation Error", mx.controls.Alert.OK);
+						focusManager.setFocus(amount);
+						return;
+					}
+					if(desc.text == "" || desc.text == null){
+						Alert.show("Please enter a description","Validation Error", mx.controls.Alert.OK);
+						focusManager.setFocus(desc);
+						return;
+					}
+					MyEventDispatcher.userFrom = transferFrom.selectedLabel;				
+					MyEventDispatcher.userTo = transferTo.selectedLabel;
+					MyEventDispatcher.amount = amount.value;
+					MyEventDispatcher.desc = desc.text;
+					var transferEvent:MyEvents = new MyEvents(MyEvents.TRANSFER);
+					dispatcher.dispatchEvent(transferEvent);
+				}
+				
+				this.parent.removeEventListener(ResizeEvent.RESIZE, onResize);
+				PopUpManager.removePopUp(this);
+			}
+			
+		]]>
+	</mx:Script>
+	<mx:VBox width="100%" height="100%" horizontalAlign="center">
+		<mx:Form width="100%" height="100%" verticalGap="10" labelWidth="120" indicatorGap="10" minHeight="200">
+			<mx:FormItem label="Transfer From :">
+				<mx:ComboBox id="transferFrom" dataProvider="{users.user.name}" prompt="Select a user" rowCount="10"  toolTip="Please select a user to Transfer From"/>
+			</mx:FormItem>
+			<mx:FormItem label="Transfer To :">
+				<mx:ComboBox id="transferTo" dataProvider="{users.user.name}"  prompt="Select a user" rowCount="10" toolTip="Please select a user to Transfer To"/>
+			</mx:FormItem>
+			<mx:FormItem label="Amount :">
+				<mx:NumericStepper id="amount" stepSize="0.5" maximum="5000" minimum="0" maxChars="7" minWidth="100" 
+					toolTip="Please enter amount to be transfered"/>
+			</mx:FormItem>
+			<mx:FormItem label="Description :">
+				<mx:TextInput id="desc" width="80%" toolTip="Please add a description of the Transfer"/>
+			</mx:FormItem>
+		</mx:Form>
+		<mx:ButtonBar id="buttonbar1" itemClick="onButtonItemClick(event)" selectedIndex="-1" width="50%">
+			<mx:Object label="Transfer" toolTip="Click to Transfer funds"/>
+			<mx:Object label="Cancel" toolTip="Cancel Transfer"/>
+		</mx:ButtonBar>
+	</mx:VBox>
+</mx:TitleWindow>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<EventMap xmlns:mx="http://www.adobe.com/2006/mxml" 
+          xmlns="http://mate.asfusion.com/">
+  
+  <mx:Script>
+    <![CDATA[
+      //import com.asfusion.mate.utils.debug.Debugger;
+      import com.asfusion.mate.core.*;
+      import event.*;
+                       
+    ]]>
+  </mx:Script>
+
+  <!-- Enable Debugging -->
+  <Debugger level="{Debugger.ALL}"/> 
+  
+<!-- ************************ Application Launch Events *********************** -->
+    
+  <!-- Launches before the application is completely loaded --> 
+  <EventHandlers type="{MyEvents.ADDCREDIT}" debug="true">
+    <MethodInvoker generator="event.MyEventDispatcher" method="creditUsers"/>
+  </EventHandlers>
+  <EventHandlers type="{MyEvents.OPENFILE}" debug="true">
+  	<MethodInvoker generator="event.MyEventDispatcher" method="openfile"/>
+  </EventHandlers>
+  <EventHandlers type="{MyEvents.CLOSEFILE}" debug="true">
+  	<MethodInvoker generator="event.MyEventDispatcher" method="closefile"/>
+  </EventHandlers>
+  <EventHandlers type="{MyEvents.ADDTOLIST}" debug="true">
+  	<MethodInvoker generator="event.MyEventDispatcher" method="addtolist"/>
+  </EventHandlers>
+  <EventHandlers type="{MyEvents.CLEARLOG}" debug="true">
+  	<MethodInvoker generator="event.MyEventDispatcher" method="clearLog"/>
+  </EventHandlers>
+  <EventHandlers type="{MyEvents.TRANSFER}" debug="true">
+  	<MethodInvoker generator="event.MyEventDispatcher" method="transfer"/>
+  </EventHandlers>
+</EventMap>

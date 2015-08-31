@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" 
+	creationComplete="onInitialise()"  paddingLeft="10"
+	title="Select User(s)"  
+	showCloseButton="true" close="onClose()"
+	width="100%" height="100%"  minHeight="250" minWidth="250"
+	horizontalAlign="center">
+	<mx:Script>
+		<![CDATA[
+			import mx.events.ChildExistenceChangedEvent;
+			import mx.controls.CheckBox;
+			import mx.events.ItemClickEvent;
+			import event.*;
+			import mx.managers.PopUpManager;
+			[Bindable]
+			private var users:XML = null;
+			
+			private function onInitialise():void{
+				buttonbar1.setStyle("buttonWidth", (this.width)/3);
+				users = MyEventDispatcher.userdata.copy();
+				users.prependChild(<user><name>Clear All</name><bal/></user>);
+				users.prependChild(<user><name>Select All</name><bal/></user>);
+				
+				for (var i:int = 0; i<users.user.length() ; i++){
+					var usernotfound:Boolean = true;
+					
+					for(var j:int = 0 ; j< MyEventDispatcher.transSelectedUserList.length ; j++){
+						if(users.user[i].name == MyEventDispatcher.transSelectedUserList[j].toString()){
+							users.user[i].appendChild(<check>true</check>);
+							usernotfound = false;
+							break;
+						}
+					}
+					if(usernotfound)
+						users.user[i].appendChild(<check>false</check>); 
+				}
+				
+				this.parent.addEventListener(Event.RESIZE, onResize);
+			}
+	
+			private function onResize(e:Event):void{
+				PopUpManager.centerPopUp(this);
+			}
+			
+			private function onClose():void{
+				this.parent.removeEventListener(Event.RESIZE, onResize);
+				var myEvent:MyEvents = new MyEvents(MyEvents.POPUPCLOSE);
+				dispatchEvent(myEvent);
+				PopUpManager.removePopUp(this);
+			}
+	
+		
+			private function onButtonItemClick(e:ItemClickEvent):void{
+				if(e.index == 0){
+					MyEventDispatcher.transSelectedUserList = new Array();
+					for(var i:int = 0; i<users.user.length() ; i++){
+						if(users.user[i].name == "Select All" || 
+							users.user[i].name == "Clear All")
+							continue;
+						if(users.user[i].check == "true"){
+							MyEventDispatcher.transSelectedUserList.push((users.user[i].name).toString());
+						}
+					}
+				}
+				else if(e.index == 1){
+				}
+				this.parent.removeEventListener(Event.RESIZE, onResize);
+				var myEvent:MyEvents = new MyEvents(MyEvents.POPUPCLOSE);
+				dispatchEvent(myEvent);
+				PopUpManager.removePopUp(this);
+			}
+			private function onClick(e:Event):void{
+				var i:int;
+				if(datagrid.selectedItem.name == "Clear All"){
+					if(users.user.(name == "Clear All").check == false){
+						for(i =0; i<users.user.length(); i++)
+							users.user[i].check = false;
+						users.user.(name == "Clear All").check = true;
+					}
+					else
+						users.user.(name == "Clear All").check = false;
+					return;
+				}
+				if(datagrid.selectedItem.name == "Select All"){
+					if(users.user.(name == "Select All").check == false){
+						for(i =0; i<users.user.length(); i++)
+							users.user[i].check = true;
+						users.user.(name == "Clear All").check = false;
+					}
+					else{
+						for(i =0; i<users.user.length(); i++)
+							users.user[i].check = false;
+					}
+					return;
+				}
+ 				for(i =0; i<users.user.length(); i++){
+					if(users.user[i].name == datagrid.selectedItem.name){
+						if(users.user[i].check == "true")
+							users.user[i].check = false;
+						else
+							users.user[i].check = true;
+					}
+					users.user.(name == "Select All").check = false;
+					users.user.(name == "Clear All").check = false;
+				}
+			}
+		]]>
+	</mx:Script>
+	<mx:DataGrid id="datagrid" dataProvider="{users.user}" 
+									allowMultipleSelection="false" 
+									editable="false"
+									sortableColumns="false" 
+									itemClick="onClick(event)" minHeight="250" minWidth="250">
+		<mx:columns>
+			<mx:DataGridColumn id="checkbox1" dataField="check" headerText="" width="22" 
+				itemRenderer="event.CheckBoxItemRender" minWidth="20"/>
+			<mx:DataGridColumn editable="false" dataField="name" headerText="User Name"/>
+			<mx:DataGridColumn editable="false" dataField="bal" headerText="Balance"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:ButtonBar id="buttonbar1" itemClick="onButtonItemClick(event)" selectedIndex="-1" width="50%">
+		<mx:Object label="OK" toolTip= "Click to Transact"/>
+		<mx:Object label="Cancel" toolTip= "Click to Cancel"/>
+	</mx:ButtonBar>
+</mx:TitleWindow>
+

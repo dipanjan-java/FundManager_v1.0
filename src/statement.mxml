@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:mate="http://mate.asfusion.com/"
+	width="100%" height="100%"
+	creationComplete="onInitialise()" showCloseButton="true" close="onClose()"
+	dropShadowEnabled="true">
+	<mate:Dispatcher id="dispatcher"/> 
+	<mate:Listener type="{MyEvents.CLEARLOG}" receive="refreshLog(event);"/>
+	<mx:Script>
+		<![CDATA[
+			import mx.events.ItemClickEvent;
+			import mx.events.CloseEvent;
+		import event.MyEvents;
+		import event.MyEventDispatcher;
+		import flash.filesystem.*;
+		import mx.managers.PopUpManager;
+		import mx.controls.Alert;
+		
+		[Bindable]
+		private var userlog:String = "";
+		private	var logfile:File;
+		private	var stream:FileStream= new FileStream();
+		
+		public function onInitialise():void{
+			this.width = this.parent.width;
+			this.height = this.parent.height;
+			buttonbar1.setStyle("buttonWidth", (this.width)/3);
+			if(MyEventDispatcher.sysuserflag){
+				logfile= File.applicationStorageDirectory.resolvePath("userdatas/SystemLog.txt");
+				this.title= "System Statement";
+			}
+			else{
+				logfile= File.applicationStorageDirectory.resolvePath("userdatas/log_" + MyEventDispatcher.selecteduserlist[0] + ".txt");
+				this.title= "Statement for  " + MyEventDispatcher.selecteduserlist[0];
+			}
+			refreshLog(new MyEvents(MyEvents.CLEARLOG));
+			this.parent.addEventListener(Event.RESIZE, onResize);
+		}
+		
+		public function onResize(e:Event):void{
+			this.width = this.parent.width;
+			this.height = this.parent.height;
+			buttonbar1.setStyle("buttonWidth", (this.width)/3);
+		}
+		
+		private function onClose():void{
+			MyEventDispatcher.sysuserflag=false;
+			this.parent.removeEventListener(Event.RESIZE, onResize);
+			PopUpManager.removePopUp(this);
+		}
+		
+		private function onButtonBarItemClick(e:ItemClickEvent):void{
+			switch(e.index){
+				case 0:	if(userlog.length > 0)
+							Alert.show("Are you sure to clear log?","Clear Log", Alert.YES | Alert.NO ,this, saveLogChoice, null, Alert.NO );
+						break;
+				case 1: MyEventDispatcher.sysuserflag=false;
+						this.parent.removeEventListener(Event.RESIZE, onResize);
+						PopUpManager.removePopUp(this);
+			}
+		}
+		
+		public function saveLogChoice(e:CloseEvent):void{
+			if(e.detail == Alert.YES){
+				Alert.show("Do you want to save the log before clearing? \n The Log cannot be retrieved later once cleared","Save Log?", Alert.YES | Alert.NO | Alert.CANCEL ,this, dispatchClear, null, Alert.CANCEL );
+			}
+		}
+		
+		public function dispatchClear(e:CloseEvent):void{
+			if(e.detail == Alert.YES)
+				MyEventDispatcher.wantToSaveLog = true;
+			else if(e.detail == Alert.NO)
+				MyEventDispatcher.wantToSaveLog = false;
+			else if(e.detail == Alert.CANCEL)
+				return;
+			var myevent:MyEvents = new MyEvents(MyEvents.CLEARLOG);
+	  		dispatcher.dispatchEvent(myevent);
+		}
+		
+		public function refreshLog(event:Event):void{
+			stream.open(logfile, FileMode.READ);
+			userlog = String(stream.readUTFBytes(stream.bytesAvailable));
+			stream.close();
+			logarea.verticalScrollPosition = logarea.maxVerticalScrollPosition;
+		}
+	]]>
+	</mx:Script>
+	
+	<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"  
+	 visible="true" height="100%" width="100%">
+	
+	<mx:VBox width="100%" height="100%" horizontalAlign="center">
+		<mx:TextArea id="logarea" text="{userlog}" wordWrap="false" editable="false" 
+			width="100%" height="93%" 
+			horizontalScrollPolicy="auto" verticalScrollPolicy="auto" 
+			fontSize="11" valueCommit="logarea.verticalScrollPosition = logarea.maxVerticalScrollPosition;"/>
+	
+		<mx:ButtonBar id="buttonbar1" itemClick="onButtonBarItemClick(event)" height="7%">
+			<mx:String>Clear Log</mx:String>
+			<mx:String>Close</mx:String>
+		</mx:ButtonBar>
+	</mx:VBox>
+	</mx:Canvas>
+</mx:TitleWindow>
